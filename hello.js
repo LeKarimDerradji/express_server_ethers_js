@@ -116,8 +116,9 @@ app.get(
     next();
   },
   async (req, res) => {
-    const balance = await provider.getBalance(req.params.account)
-    res.send(balance.toString());
+    const bigNumber = await provider.getBalance(req.params.account)
+    const balanceFromBN = bigNumber / 10 ** 18
+    res.send(balanceFromBN.toString());
   }
 );
 
