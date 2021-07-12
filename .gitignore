@@ -1,5 +1,9 @@
 #nodemodule
 .node_modules
 
+#ENV
+.env
 
+#AccessLog
+.access-log.txt
 
