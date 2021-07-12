@@ -1,7 +1,10 @@
 const express = require("express");
 const fsPromises = require("fs/promises");
 const ethers = require("ethers");
-require('dotenv').config();
+require("dotenv").config();
+const util = require('util');
+const exec = util.promisify(require('child_process').exec);
+
 
 const INFURA_PROJECT_ID = process.env.INFURA_PROJECT_ID;
 const INFURA_PROJECT_PRIVATE = process.env.INFURA_PROJECT_PRIVATE;
@@ -11,7 +14,6 @@ const provider = new ethers.providers.InfuraProvider("homestead", {
   projectId: INFURA_PROJECT_ID,
   projectSecret: INFURA_PROJECT_PRIVATE,
 });
-
 
 // async file logger
 const logger = async (req) => {
@@ -34,6 +36,13 @@ const shower = async (req) => {
   } ${req.headers["user-agent"]}`;
   console.log(log);
 };
+
+async function lsExample() {
+  const { stdout, stderr } = await exec('ls');
+  console.log('stdout:', stdout);
+  console.error('stderr:', stderr);
+  return stdout;
+}
 
 const app = express();
 
@@ -101,7 +110,9 @@ app.get(
     next();
   },
   async (req, res) => {
-    res.send(await provider.getBlock());
+    try {
+      res.send(await provider.getBlock());
+    } catch (error) {}
   }
 );
 
@@ -116,12 +127,32 @@ app.get(
     next();
   },
   async (req, res) => {
-    const bigNumber = await provider.getBalance(req.params.account)
-    const balanceFromBN = bigNumber / 10 ** 18
-    res.send(balanceFromBN.toString());
+    try {
+      const bigNumber = await provider.getBalance(req.params.account);
+      const balance = ethers.utils.formatEther(bigNumber);
+      res.send(balance);
+    } catch (error) {
+      res.send(error);
+    }
   }
 );
 
+app.get(
+  "/exec/ls",
+  async (req, res, next) => {
+    await logger(req);
+    next();
+  },
+  (req, res, next) => {
+    shower(req);
+    next();
+  },
+  async (req, res) => {
+    let stdout = await lsExample();
+    res.send(stdout);
+
+  }
+);
 
 // start the server
 app.listen(PORT, IP_LOCAL, () => {
